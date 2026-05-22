@@ -1,6 +1,6 @@
 # Regalgo — Wrapper Python pour standardiser les algorithmes publics
 
-`regalgo` fournit les structures de données et l'outillage de validation nécessaires pour packager des algorithmes réglementaires français de façon interopérable, en s'appuyant sur les [Core Vocabularies ISA² de l'Union Européenne](https://joinup.ec.europa.eu/collection/semic-support-centre/core-vocabularies).
+`regalgo` fournit les structures de données et l'outillage de validation nécessaires pour packager des algorithmes réglementaires français de façon interopérable, en s'appuyant sur les [Core Vocabularies de l'Union Européenne](https://joinup.ec.europa.eu/collection/semic-support-centre/core-vocabularies).
 
 ## Pourquoi ?
 
@@ -28,9 +28,9 @@ pip install 'regalgo[shacl]'
 
 | Classe | Rôle |
 |---|---|
-| `PersonInput` | Représentation d'une personne alignée sur `cv:` (Core Person Vocabulary) et `cccev:` |
 | `AlgoInput` | Entrée normalisée passée à un algorithme réglementaire |
 | `AlgoResult` | Sortie normalisée : valeur + identifiant algo + texte réglementaire + snapshot des entrées |
+| `PersonInput` | Représentation d'une personne alignée sur `cv:` (Core Person Vocabulary) et `cccev:`. Permet de créer un `AlgoInput`|
 | `ValidationResult` | Résultat de la validation SHACL d'un `PersonInput` |
 
 ## Exemple d'utilisation
@@ -76,10 +76,6 @@ if not result:
 
 [regalgo-civique-droit-vote](https://github.com/qloridant/regalgo-civique-droit-vote) implémente l'algorithme d'éligibilité au droit de vote (Code électoral, Art. L.2 à L.7 et L.O. 227-1) en s'appuyant sur ce wrapper.
 
-Il illustre comment :
-- sous-classer `AlgoInput` / `AlgoResult` pour un cas métier précis ;
-- lier le résultat aux articles de loi applicables dans `AlgoResult.regulation` ;
-- tester chaque branche de l'algorithme via les structures normalisées de `regalgo`.
 
 ## Structure du dépôt
 
@@ -105,5 +101,5 @@ pytest
 
 ## Standards de référence
 
-- [Core Person Vocabulary 2.1.0](https://semiceu.github.io/Core-Person-Vocabulary/releases/2.1.0/) — ISA² / SEMIC
-- [Core Criterion and Evidence Vocabulary (CCCEV)](https://semiceu.github.io/CCCEV/) — ISA² / SEMIC
+- [Core Person Vocabulary 2.1.0](https://semiceu.github.io/Core-Person-Vocabulary/releases/2.1.0/) —  SEMIC
+- [Core Criterion and Evidence Vocabulary (CCCEV)](https://semiceu.github.io/CCCEV/) —SEMIC
