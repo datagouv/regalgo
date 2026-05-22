@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "regalgo"
+version = "0.0.1"
+description = "Wrapper de standardisation d'algorithmes publics en python"
+packages = [{include = "regalgo", from = "src"}]
+readme='README.md'
+
+[tool.poetry.dependencies]
+python = "^3.10"
+rdflib = {version = ">=6.0", optional = true}
+pyshacl = {version = ">=0.20", optional = true}
+
+[tool.poetry.extras]
+shacl = ["rdflib", "pyshacl"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+

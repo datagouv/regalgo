@@ -1,0 +1,49 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix cv:     <http://data.europa.eu/m8g/> .
+@prefix schema: <http://schema.org/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+#
+# Shapes dérivées du Core Person Vocabulary 2.1.0
+# https://semiceu.github.io/Core-Person-Vocabulary/releases/2.1.0/
+#
+# Simplifications appliquées dans ce modèle :
+#   - cv:nationality : URI concept (cv:Jurisdiction) → xsd:string (ISO 3166-1 alpha-2)
+#   - cv:domicile    : cv:Address object → xsd:string (adminUnitL1, ISO 3166-1 alpha-2)
+#
+# Contrainte non statique (vérifiée en code) :
+#   - schema:birthDate ne peut pas être dans le futur
+#
+
+cv:PersonShape
+    a sh:NodeShape ;
+    sh:targetClass cv:Person ;
+
+    sh:property [
+        sh:path     cv:nationality ;
+        sh:name     "nationality" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern  "^[A-Z]{2}$" ;
+        sh:message  "cv:nationality doit être un code ISO 3166-1 alpha-2 en majuscules (ex. 'FR', 'DE')" ;
+    ] ;
+
+    sh:property [
+        sh:path     schema:birthDate ;
+        sh:name     "birthDate" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:date ;
+        sh:message  "schema:birthDate doit être une date valide au format xsd:date" ;
+    ] ;
+
+    sh:property [
+        sh:path     cv:domicile ;
+        sh:name     "domicile" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern  "^[A-Z]{2}$" ;
+        sh:message  "cv:domicile (adminUnitL1) doit être un code ISO 3166-1 alpha-2 en majuscules (ex. 'FR')" ;
+    ] .
