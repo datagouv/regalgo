@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .algorithm import PersonInput
+    from .standard_rules import PersonInput
 
-_SHAPES_PATH = Path(__file__).parent / "shapes" / "cpv_person.ttl"
+_SHAPES_URL = "https://semiceu.github.io/Core-Person-Vocabulary/releases/2.1.0/shacl/core-person-ap-SHACL.ttl"
 
 
 @dataclass
@@ -58,7 +57,7 @@ def validate_person_input(person: PersonInput) -> ValidationResult:
                     Literal(person.cv_domicile_country, datatype=XSD.string)))
 
     # --- Validation SHACL ---
-    shapes_graph = Graph().parse(_SHAPES_PATH, format="turtle")
+    shapes_graph = Graph().parse(_SHAPES_URL, format="turtle")
     conforms, results_graph, _ = pyshacl.validate(
         data_graph,
         shacl_graph=shapes_graph,

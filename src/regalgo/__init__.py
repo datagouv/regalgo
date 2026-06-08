@@ -1,4 +1,4 @@
-from .algorithm import AlgoInput, AlgoResult, PersonInput, PublicRule
+from .standard_rules import AlgoInput, AlgoResult, PersonInput, PublicRule
 from .validation import ValidationResult, validate_person_input
 
 __all__ = [

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import click
 
-from .algorithm import PersonInput
+from .standard_rules import PersonInput
 
 
 @click.group()
