@@ -75,22 +75,21 @@ class AlgoResult:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
-  # --- Abtract Implémentation de l'algorithme ---
+# --- Abtract Implémentation de l'algorithme ---
+class PublicRule(ABC):
 
-    class PublicRule(ABC):
+    def __init__(self) -> None:
+        _meta_path = Path(__file__).parent / "metadata.json"
+        self._metadata = json.loads(_meta_path.read_text())
 
-        def __init__(self) -> None:
-            _meta_path = Path(__file__).parent / "metadata.json"
-            self._metadata = json.loads(_meta_path.read_text())
+    @property
+    def algo_id(self) -> str:
+        return self._metadata["dct:identifier"]
 
-        @property
-        def algo_id(self) -> str:
-            return self._metadata["dct:identifier"]
+    @property
+    def regulation(self) -> dict[str, str]:
+        return self._metadata["cprmv:isBasedOn"]
 
-        @property
-        def regulation(self) -> dict[str, str]:
-            return self._metadata["cprmv:isBasedOn"]
-
-        @abstractmethod
-        def compute(self, algo_input: AlgoInput) -> AlgoResult:
-            pass
+    @abstractmethod
+    def compute(self, algo_input: AlgoInput) -> AlgoResult:
+        pass
