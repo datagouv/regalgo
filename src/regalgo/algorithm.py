@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from datetime import date
 from dataclasses import dataclass, field
 from typing import Any
+from abc import ABC, abstractmethod
 
 # États membres de l'UE — ISO 3166-1 alpha-2 (27 membres, 2024)
 EU_MEMBER_STATES: frozenset[str] = frozenset({
@@ -12,7 +15,7 @@ EU_MEMBER_STATES: frozenset[str] = frozenset({
 })
 
 
-# --- Structures de données standard (à transéferer dans un package) ---
+# --- Structures de données standard  ---
 
 @dataclass
 class AlgoInput:
@@ -70,3 +73,24 @@ class AlgoResult:
     regulation: dict[str, str]
     inputs_snapshot: dict[str, Any]
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+  # --- Abtract Implémentation de l'algorithme ---
+
+    class PublicRule(ABC):
+
+        def __init__(self) -> None:
+            _meta_path = Path(__file__).parent / "metadata.json"
+            self._metadata = json.loads(_meta_path.read_text())
+
+        @property
+        def algo_id(self) -> str:
+            return self._metadata["dct:identifier"]
+
+        @property
+        def regulation(self) -> dict[str, str]:
+            return self._metadata["cprmv:isBasedOn"]
+
+        @abstractmethod
+        def compute(self, algo_input: AlgoInput) -> AlgoResult:
+            pass
