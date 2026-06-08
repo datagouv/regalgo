@@ -1,7 +1,7 @@
-from .algorithm import AlgoInput, AlgoResult, PersonInput
+from .algorithm import AlgoInput, AlgoResult, PersonInput, PublicRule
 from .validation import ValidationResult, validate_person_input
 
 __all__ = [
-    "AlgoInput", "AlgoResult", "PersonInput",
+    "AlgoInput", "AlgoResult", "PersonInput", "PublicRule",
     "validate_person_input", "ValidationResult",
 ]
