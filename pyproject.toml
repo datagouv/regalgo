@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "regalgo"
-version = "0.0.1"
+version = "0.0.2"
 description = "Wrapper de standardisation d'algorithmes publics en python"
 packages = [{include = "regalgo", from = "src"}]
 readme='README.md'
