@@ -139,11 +139,11 @@ def test_cas_nominal(algo):
 _METADATA_JSON = '''\
 {{
     "dct:identifier": "{project_name}",
-    "dct:title": "{project_name}",
-    "dct:description": "Description de l\'algorithme",
+    "dct:title": "{title}",
+    "dct:description": "{description}",
     "cprmv:isBasedOn": {{
-        "dct:source": "",
-        "dct:description": "Référence réglementaire"
+        "dct:source": "{reg_source}",
+        "dct:description": "{reg_description}"
     }}
 }}
 '''
@@ -217,7 +217,9 @@ def _to_module_name(name: str) -> str:
 @click.argument("project_name")
 @click.option("--output-dir", "-o", default=".", type=click.Path(),
               help="Répertoire parent où créer le projet (défaut : répertoire courant)")
-def init(project_name: str, output_dir: str) -> None:
+@click.option("--no-input", is_flag=True, default=False,
+              help="Mode non interactif : utilise les valeurs par défaut pour le metadata.json")
+def init(project_name: str, output_dir: str, no_input: bool) -> None:
     """Initialise un nouveau projet regalgo avec la structure standard.
 
     PROJECT_NAME est le nom du projet (ex. mon-algo, eligibilite-rsa).
@@ -228,6 +230,18 @@ def init(project_name: str, output_dir: str) -> None:
 
     if base.exists():
         raise click.ClickException(f"Le répertoire '{base}' existe déjà.")
+
+    if no_input:
+        title = project_name
+        description = "Description de l'algorithme"
+        reg_source = ""
+        reg_description = "Référence réglementaire"
+    else:
+        click.echo("\nConfiguration du fichier metadata.json :")
+        title = click.prompt("  Titre de l'algorithme", default=project_name)
+        description = click.prompt("  Description de l'algorithme", default="Description de l'algorithme")
+        reg_source = click.prompt("  Source réglementaire (URL ou référence légale)", default="")
+        reg_description = click.prompt("  Description de la référence réglementaire", default="Référence réglementaire")
 
     files: dict[Path, str] = {
         base / "pyproject.toml": _PYPROJECT_TOML.format(
@@ -241,7 +255,11 @@ def init(project_name: str, output_dir: str) -> None:
             project_name=project_name, class_name=class_name
         ),
         base / "src" / module_name / "metadata.json": _METADATA_JSON.format(
-            project_name=project_name
+            project_name=project_name,
+            title=title,
+            description=description,
+            reg_source=reg_source,
+            reg_description=reg_description,
         ),
         base / "tests" / "test_regles.py": _TEST_PY.format(
             project_name=project_name, module_name=module_name, class_name=class_name

@@ -89,6 +89,56 @@ tests/
 └── test_validation.py
 ```
 
+## CLI
+
+### `regalgo init` — initialiser un nouveau projet
+
+```bash
+regalgo init mon-algo
+```
+
+La commande pose une série de questions pour configurer le fichier `metadata.json` :
+
+```
+Configuration du fichier metadata.json :
+  Titre de l'algorithme [mon-algo]: Éligibilité à la prestation X
+  Description de l'algorithme [Description de l'algorithme]: Calcule l'éligibilité...
+  Source réglementaire (URL ou référence légale) []: https://legifrance.gouv.fr/...
+  Description de la référence réglementaire [Référence réglementaire]: Décret n° 2024-XXX
+```
+
+Pour un usage non interactif (CI/CD), utilisez `--no-input` :
+
+```bash
+regalgo init mon-algo --no-input
+```
+
+Options :
+
+| Option | Description |
+|---|---|
+| `--output-dir`, `-o` | Répertoire parent où créer le projet (défaut : `.`) |
+| `--no-input` | Utilise les valeurs par défaut, sans poser de questions |
+
+### `regalgo validate` — valider un `PersonInput`
+
+Valide une entrée personne contre les shapes SHACL du Core Person Vocabulary (nécessite `regalgo[shacl]`) :
+
+```bash
+regalgo validate --nationality FR --birth-date 1990-06-15
+```
+
+Options :
+
+| Option | Description |
+|---|---|
+| `--nationality`, `-n` | Nationalité ISO 3166-1 alpha-2 (ex. `FR`, `DE`) |
+| `--birth-date`, `-b` | Date de naissance ISO 8601 (`YYYY-MM-DD`) |
+| `--civil-rights` / `--no-civil-rights` | Droits civiques intacts (défaut : oui) |
+| `--electoral-list` / `--no-electoral-list` | Inscrit sur les listes électorales (défaut : oui) |
+| `--domicile` | Pays de domicile ISO 3166-1 alpha-2 (défaut : `FR`) |
+| `--json-input` | Lire les champs depuis un fichier JSON |
+
 ## Développement
 
 ```bash
