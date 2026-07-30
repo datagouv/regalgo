@@ -1,24 +1,29 @@
-# Regalgo — Wrapper Python pour standardiser les algorithmes publics
+# Regalgo — Librairie pour standardiser les algorithmes publics en python
 
-`regalgo` fournit les structures de données pour packager des algorithmes réglementaires français de façon interopérable.
+`regalgo` permet de standardiser un algorithme en python afin de bénéficier des **services automatisés de [regles.data.gouv.fr](https://shallowred.github.io/regles.data.gouv.fr-frontend-poc/mvp/regles/)** :
+* référencement
+* documentation
+* API
+* simulateur
+* explicabilité
+* simplification des signatures de fonctions grâce aux champs déjà disponibles dans API Particulier
+* ...
+
 
 ## Pourquoi ?
 
 Les algorithmes publics (éligibilité, calcul de droits, conditions d'accès…) sont souvent réimplémentés en silos, avec des structures de données incompatibles et sans traçabilité vers les textes réglementaires qui les fondent.
 
+
+## Comment ?
+
 `regalgo` propose un socle commun :
 
-- des **modèles de données normalisés** alignés sur les standards européens (Core Person Vocabulary, CCCEV) ;
+- une harmonisation et une traçabilité des **données entrantes** alignées sur API Particulier
 - une **sortie traçable** (`AlgoResult`) qui lie chaque résultat à son identifiant d'algorithme et à la réglementation applicable ;
+- une méthode `compute()`, porte d'entrée de votre code réglementaire
+- une aide à la saisie des metadonnées nécessaires au réferencement (fichier `metadata.json`, lu par [regles.data.gouv.fr])
 
-## Installation
-
-```bash
-pip install regalgo
-```
-
-
-## Concepts clés
 
 | Classe | Rôle |
 |---|---|
@@ -26,7 +31,14 @@ pip install regalgo
 | `AlgoResult` | Sortie normalisée : valeur + identifiant algo + texte réglementaire + snapshot des entrées |
 | `PersonInput` | Représentation d'une personne alignée sur `cv:` (Core Person Vocabulary) et `cccev:`. Permet de créer un `AlgoInput`|
 
+## Installation
+
+```bash
+pip install regalgo
+```
+
 ## Exemple d'utilisation
+### Code
 
 ```python
 from datetime import date
@@ -55,9 +67,9 @@ print(algo_input.data)
 ```
 
 
-## Exemple de réutilisation : algorithme droit de vote
+### Projet : Algorithme droit de vote (POC)
 
-[regalgo-civique-droit-vote](https://github.com/qloridant/regalgo-civique-droit-vote) implémente l'algorithme d'éligibilité au droit de vote (Code électoral, Art. L.2 à L.7 et L.O. 227-1) en s'appuyant sur ce wrapper.
+[regalgo-civique-droit-vote](https://github.com/qloridant/regalgo-civique-droit-vote) implémente l'algorithme d'éligibilité au droit de vote (Code électoral, Art. L.2 à L.7 et L.O. 227-1) en s'appuyant sur cette librairie.
 
 
 ## CLI
