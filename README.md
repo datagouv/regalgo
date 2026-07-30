@@ -19,7 +19,7 @@ Les algorithmes publics (éligibilité, calcul de droits, conditions d'accès…
 
 `regalgo` propose un socle commun :
 
-- une harmonisation et une traçabilité des **données entrantes** alignées sur API Particulier
+- une traçabilité des **données entrantes** et une harmonisation alignée sur [API Particulier](https://particulier.api.gouv.fr/catalogue)
 - une **sortie traçable** (`AlgoResult`) qui lie chaque résultat à son identifiant d'algorithme et à la réglementation applicable ;
 - une méthode `compute()`, porte d'entrée de votre code réglementaire
 - une aide à la saisie des metadonnées nécessaires au réferencement (fichier `metadata.json`, lu par [regles.data.gouv.fr])
@@ -44,13 +44,13 @@ pip install regalgo
 from datetime import date
 from regalgo import PersonInput
 
-# Décrire une personne avec les Core Vocabularies EU ISA²
+# Décrire une personne avec des noms de variables provenant de : France Connect (FC) > API Particulier > Core Vocabulary Européens > Custom
 personne = PersonInput(
-    cv_nationality="FR",           # ISO 3166-1 alpha-2
-    schema_birth_date=date(1990, 6, 15),
-    cccev_civil_rights_intact=True,
-    cccev_electoral_list_registered=True,
-    cv_domicile_country="FR",
+    cv_nationality="FR",
+    fc_birthdate=date(1990, 6, 15),
+    mi_droits_civiques_intacts=True,
+    mi_inscription_liste_electorale=True,
+    cnaf_adresse_pays="FR",
 )
 
 # Convertir en AlgoInput (calcule l'âge automatiquement)
