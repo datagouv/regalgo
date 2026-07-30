@@ -1,86 +1,12 @@
 from __future__ import annotations
 
-import json
-import sys
-from datetime import date
 from pathlib import Path
-
 import click
-
-from .standard_rules import PersonInput
 
 
 @click.group()
 def main() -> None:
     """Regalgo — outillage pour les algorithmes réglementaires publics."""
-
-
-# ---------------------------------------------------------------------------
-# validate
-# ---------------------------------------------------------------------------
-
-@main.command()
-@click.option("--nationality", "-n", required=True, help="Nationalité ISO 3166-1 alpha-2 (ex. FR, DE)")
-@click.option("--birth-date", "-b", required=True, help="Date de naissance ISO 8601 (YYYY-MM-DD)")
-@click.option("--civil-rights/--no-civil-rights", default=True, show_default=True,
-              help="Droits civiques intacts (cccev:civilRightsIntact)")
-@click.option("--electoral-list/--no-electoral-list", default=True, show_default=True,
-              help="Inscrit sur les listes électorales")
-@click.option("--domicile", default="FR", show_default=True,
-              help="Pays de domicile ISO 3166-1 alpha-2")
-@click.option("--json-input", type=click.File("r"), default=None, metavar="FILE",
-              help="Lire les champs depuis un fichier JSON (les flags CLI ont la priorité)")
-def validate(
-    nationality: str,
-    birth_date: str,
-    civil_rights: bool,
-    electoral_list: bool,
-    domicile: str,
-    json_input: click.utils.LazyFile | None,
-) -> None:
-    """Valide un PersonInput contre les shapes SHACL du Core Person Vocabulary."""
-    try:
-        from .validation import validate_person_input
-    except ImportError as exc:
-        raise click.ClickException(
-            "rdflib et pyshacl sont requis : pip install 'regalgo[shacl]'"
-        ) from exc
-
-    params: dict = {}
-    if json_input:
-        try:
-            params = json.load(json_input)
-        except json.JSONDecodeError as exc:
-            raise click.ClickException(f"JSON invalide : {exc}") from exc
-
-    resolved_nationality = params.get("cv_nationality", nationality)
-    resolved_birth_date_str = params.get("schema_birth_date", birth_date)
-    resolved_civil_rights = params.get("cccev_civil_rights_intact", civil_rights)
-    resolved_electoral_list = params.get("cccev_electoral_list_registered", electoral_list)
-    resolved_domicile = params.get("cv_domicile_country", domicile)
-
-    try:
-        parsed_date = date.fromisoformat(resolved_birth_date_str)
-    except ValueError as exc:
-        raise click.ClickException(f"Date invalide '{resolved_birth_date_str}' — format attendu : YYYY-MM-DD") from exc
-
-    person = PersonInput(
-        cv_nationality=resolved_nationality.upper(),
-        schema_birth_date=parsed_date,
-        cccev_civil_rights_intact=resolved_civil_rights,
-        cccev_electoral_list_registered=resolved_electoral_list,
-        cv_domicile_country=resolved_domicile.upper(),
-    )
-
-    result = validate_person_input(person)
-
-    if result.valid:
-        click.secho("OK — PersonInput valide.", fg="green")
-    else:
-        click.secho(f"INVALIDE — {len(result.violations)} violation(s) :", fg="red")
-        for violation in result.violations:
-            click.echo(f"  • {violation}")
-        sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
