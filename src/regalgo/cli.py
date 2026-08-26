@@ -75,33 +75,35 @@ _METADATA_JSON = '''\
 '''
 
 _PYPROJECT_TOML = '''\
-[tool.poetry]
+[project]
 name = "{project_name}"
 version = "0.1.0"
 description = ""
-packages = [{{include = "{module_name}", from = "src"}}]
+requires-python = ">=3.10"
+dependencies = [
+    "regalgo",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-regalgo = "*"
+[dependency-groups]
+dev = ["pytest"]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "*"
+[tool.hatch.build.targets.wheel]
+packages = ["src/{module_name}"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 '''
 
 _README_MD = '''\
 # {project_name}
 
-Algorithme réglementaire basé sur [regalgo](https://github.com/qloridant/regalgo).
+Algorithme réglementaire basé sur [regalgo](https://github.com/datagouv/regalgo).
 
 ## Installation
 
 ```bash
-pip install {project_name}
+uv add {project_name}
 ```
 
 ## Utilisation
@@ -199,5 +201,5 @@ def init(project_name: str, output_dir: str, no_input: bool) -> None:
 
     click.secho(f"\nProjet '{project_name}' initialisé.", fg="green")
     click.echo(f"\n  cd {project_name}")
-    click.echo("  poetry install")
-    click.echo("  pytest")
+    click.echo("  uv sync")
+    click.echo("  uv run pytest")

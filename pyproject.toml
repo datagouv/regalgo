@@ -1,23 +1,26 @@
-[tool.poetry]
+[project]
 name = "regalgo"
-version = "0.0.3"
+authors = [{name = "Quentin Loridant", email = "quentin.loridant.ext@numerique.gouv.fr"}]
+version = "0.0.4"
 description = "Wrapper de standardisation d'algorithmes publics en python"
-packages = [{include = "regalgo", from = "src"}]
-readme='README.md'
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-click = ">=8.0"
-rdflib = {version = ">=6.0", optional = true}
-pyshacl = {version = ">=0.20", optional = true}
-
-[tool.poetry.scripts]
+[project.scripts]
 regalgo = "regalgo.cli:main"
 
-[tool.poetry.extras]
-shacl = ["rdflib", "pyshacl"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/regalgo"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true

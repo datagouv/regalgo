@@ -27,9 +27,10 @@ class AlgoInput:
 @dataclass
 class PersonInput:
     """
-    Représentation d'une personne alignée sur les Core Vocabularies EU ISA².
+    Représentation d'une personne alignée sur l'identité pivot de France Connect.
 
     Préfixes :
+      fc:     France Connect
       cv:     http://data.europa.eu/m8g/       (Core Person Vocabulary)
       schema: http://schema.org/
       cccev:  http://data.europa.eu/m8g/cccev/ (Core Criterion & Evidence Vocabulary)

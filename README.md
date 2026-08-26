@@ -24,6 +24,22 @@ Les algorithmes publics (éligibilité, calcul de droits, conditions d'accès…
 - une méthode `compute()`, porte d'entrée de votre code réglementaire
 - une aide à la saisie des metadonnées nécessaires au réferencement (fichier `metadata.json`, lu par [regles.data.gouv.fr])
 
+## Installation
+
+Avec [uv](https://docs.astral.sh/uv/) (recommandé) :
+
+```bash
+uv add regalgo
+```
+
+Avec pip :
+
+```bash
+pip install regalgo
+```
+
+
+## Concepts clés
 
 | Classe | Rôle |
 |---|---|
@@ -108,8 +124,8 @@ Options :
 
 ```bash
 # Installer les dépendances
-poetry install 
+uv sync
 
 # Lancer les tests
-pytest
+uv run pytest
 ```
