@@ -47,12 +47,6 @@ pip install regalgo
 | `AlgoResult` | Sortie normalisée : valeur + identifiant algo + texte réglementaire + snapshot des entrées |
 | `PersonInput` | Représentation d'une personne alignée sur `cv:` (Core Person Vocabulary) et `cccev:`. Permet de créer un `AlgoInput`|
 
-## Installation
-
-```bash
-pip install regalgo
-```
-
 ## Exemple d'utilisation
 ### Code
 
