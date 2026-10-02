@@ -1,3 +1,4 @@
-from .standard_rules import AlgoInput, AlgoResult, PersonInput, PublicRule
+from .standard_rules import AlgoInput, AlgoResult, PublicRule, FCPersonInput
+from .utils import compute_age
 
-__all__ = ["AlgoInput", "AlgoResult", "PersonInput", "PublicRule"]
+__all__ = ["AlgoInput", "AlgoResult", "PublicRule", "FCPersonInput", "compute_age"]

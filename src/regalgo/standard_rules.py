@@ -1,96 +1,87 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from datetime import date
-from dataclasses import dataclass, field
-from typing import Any
 from abc import ABC, abstractmethod
+from datetime import date
+from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
 
-# États membres de l'UE — ISO 3166-1 alpha-2 (27 membres, 2024)
-EU_MEMBER_STATES: frozenset[str] = frozenset({
-    "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI",
-    "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT",
-    "NL", "PL", "PT", "RO", "SE", "SI", "SK",
-})
+from pydantic import BaseModel, ConfigDict, Field
 
 
-# --- Structures de données standard  ---
-
-@dataclass
-class AlgoInput:
-    """Entrée normalisée d'un algorithme réglementaire."""
-    data: dict[str, Any]
-    context: dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass
-class PersonInput:
+# --- Entrée / sortie des algorithmes -----------------------------------------
+
+class AlgoInput(BaseModel):
     """
-    Représentation d'une personne alignée sur l'identité pivot de France Connect.
+    Base à sous-classer : chaque algorithme déclare ses champs typés.
 
-    Préfixes :
-      fc:     France Connect
-      cv:     http://data.europa.eu/m8g/       (Core Person Vocabulary)
-      schema: http://schema.org/
-      cccev:  http://data.europa.eu/m8g/cccev/ (Core Criterion & Evidence Vocabulary)
+    Le schéma JSON (simulateur, doc, OpenAPI) est obtenu via `input_schema()`.
     """
-    # cv:nationality — code ISO 3166-1 alpha-2 (ex. "FR", "DE")
-    cv_nationality: str
-    # schema:birthDate — date de naissance, l'âge est calculé à la volée
-    schema_birth_date: date
-    # CCCEV criterion : non privé de ses droits civiques (Art. L.5, L.6)
-    cccev_civil_rights_intact: bool
-    # CCCEV criterion : inscrit sur les listes électorales (Art. L.7 / L.O. 227-1)
-    cccev_electoral_list_registered: bool
-    # cv:domicile → adminUnitL1 — pays de résidence, ISO 3166-1 alpha-2 (défaut "FR")
-    cv_domicile_country: str = "FR"
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    def to_algo_input(self, context: dict[str, Any] | None = None) -> AlgoInput:
-        """Convertit vers AlgoInput en calculant l'âge depuis schema:birthDate."""
-        today = date.today()
-        age = today.year - self.schema_birth_date.year - (
-            (today.month, today.day)
-            < (self.schema_birth_date.month, self.schema_birth_date.day)
-        )
-        return AlgoInput(
-            data={
-                "nationalite_francaise": self.cv_nationality.upper() == "FR",
-                "citoyennete_ue": self.cv_nationality.upper() in EU_MEMBER_STATES,
-                "domicile_france": self.cv_domicile_country.upper() == "FR",
-                "age": age,
-                "capacite_civique": self.cccev_civil_rights_intact,
-                "inscrit_listes_electorales": self.cccev_electoral_list_registered,
-            },
-            context=context or {},
-        )
+    @classmethod
+    def input_schema(cls) -> dict[str, Any]:
+        return cls.model_json_schema()
+
+    def snapshot(self) -> dict[str, Any]:
+        """Représentation JSON-compatible, stockée dans AlgoResult."""
+        return self.model_dump(mode="json")
 
 
-@dataclass
-class AlgoResult:
+class AlgoResult(BaseModel):
     """Sortie normalisée d'un algorithme réglementaire."""
     value: Any
-    algo_id: str
-    regulation: dict[str, str]
     inputs_snapshot: dict[str, Any]
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-# --- Abtract Implémentation de l'algorithme ---
-class PublicRule(ABC):
+# --- Sources de données (indépendantes de AlgoInput) --------------------------
 
-    def __init__(self) -> None:
-        _meta_path = Path(__file__).parent / "metadata.json"
-        self._metadata = json.loads(_meta_path.read_text())
+@runtime_checkable
+class InputSource(Protocol):
+    """Contrat commun : tout modèle source sait se projeter en AlgoInput."""
 
-    @property
-    def algo_id(self) -> str:
-        return self._metadata["dct:identifier"]
+    def to_algo_input(self, context: dict[str, Any] | None = None) -> AlgoInput: ...
 
-    @property
-    def regulation(self) -> dict[str, str]:
-        return self._metadata["cprmv:isBasedOn"]
+
+class FCPersonInput(BaseModel):
+    """Personne alignée sur l'identité pivot de FranceConnect."""
+    # Identité pivot (standard OpenID Connect)
+    given_name: str                 # prénoms séparés par des espaces
+    family_name: str                # nom de famille à l'état civil
+    birthdate: date                 # YYYY-MM-DD
+    gender: str                     # "male" | "female"
+    birthplace: str                 # code INSEE sur 5 chiffres ("" si né à l'étranger)
+    birthcountry: str               # code INSEE du pays sur 5 chiffres
+    # Données complémentaires
+    sub: str                        # identifiant technique
+    email: str
+    preferred_username: str         # nom d'usage
+
+    def age(self, reference_date: date) -> int:
+        return compute_age(self.birthdate, reference_date)
+
+
+# --- Règle publique générique -------------------------------------------------
+
+I = TypeVar("I", bound=AlgoInput)
+
+
+class PublicRule(ABC, Generic[I]):
+    """
+    Un algorithme réglementaire, paramétré par son type d'entrée `I`.
+
+        class MonAlgo(PublicRule[MonInput]):
+            def compute(self, algo_input: MonInput) -> AlgoResult: ...
+    """
 
     @abstractmethod
-    def compute(self, algo_input: AlgoInput) -> AlgoResult:
-        pass
+    def compute(self, algo_input: I) -> AlgoResult: ...
+
+    def result(self, value: Any, algo_input: I, **metadata: Any) -> AlgoResult:
+        """Construit un AlgoResult traçable (évite de répéter le boilerplate)."""
+        return AlgoResult(
+            value=value,
+            inputs_snapshot=algo_input.snapshot(),
+            metadata=metadata,
+        )
