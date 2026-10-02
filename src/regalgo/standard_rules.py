@@ -3,10 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import date
 from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
-
 from pydantic import BaseModel, ConfigDict, Field
-
-
+from .utils import compute_age
 
 
 # --- Entrée / sortie des algorithmes -----------------------------------------
