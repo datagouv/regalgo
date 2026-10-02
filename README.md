@@ -19,19 +19,18 @@ Les algorithmes publics (éligibilité, calcul de droits, conditions d'accès…
 
 `regalgo` propose un socle commun :
 
-- une traçabilité des **données entrantes** et une harmonisation alignée sur [API Particulier](https://particulier.api.gouv.fr/catalogue)
-- une **sortie traçable** (`AlgoResult`) qui lie chaque résultat à son identifiant d'algorithme et à la réglementation applicable ;
-- une méthode `compute()`, porte d'entrée de votre code réglementaire
-- une aide à la saisie des metadonnées nécessaires au réferencement (fichier `metadata.json`, lu par [regles.data.gouv.fr])
+- une **entrée typée** (`AlgoInput`) : chaque algorithme déclare les variables qu'il attend, ce qui permet de valider les données et de générer automatiquement le schéma JSON (simulateur, documentation, API) ;
+- des **modèles sources** (comme `FCPersonInput`) alignés sur [API Particulier](https://particulier.api.gouv.fr/catalogue) et FranceConnect, pour harmoniser et tracer les données entrantes ;
+- une **sortie traçable** (`AlgoResult`) qui lie chaque résultat à son identifiant d'algorithme, à la réglementation applicable et à un snapshot des entrées ;
+- une classe `PublicRule`, générique sur le type d'entrée, dont la méthode `compute()` est la porte d'entrée de votre code réglementaire ;
+- une aide à la saisie des métadonnées nécessaires au référencement (fichier `metadata.json`, lu par [regles.data.gouv.fr]).
 
 ## Installation
 
-Le projet est pour le moment sur l'instance de test de Pypi. 
 Avec [uv](https://docs.astral.sh/uv/) (recommandé) :
 
 ```bash
-uv add --index https://test.pypi.org/simple/ regalgo
-uv add regalgo
+uv add --index testpypi=https://test.pypi.org/simple/ your-package
 ```
 
 Avec pip :
@@ -45,75 +44,113 @@ pip install -i https://test.pypi.org/simple/ regalgo==0.0.3
 
 | Classe | Rôle |
 |---|---|
-| `AlgoInput` | Entrée normalisée passée à un algorithme réglementaire |
+| `AlgoInput` | Classe de base (Pydantic) à sous-classer : déclare les champs typés qu'attend un algorithme. Fournit `input_schema()` (schéma JSON) et `snapshot()` |
 | `AlgoResult` | Sortie normalisée : valeur + identifiant algo + texte réglementaire + snapshot des entrées |
-| `PersonInput` | Représentation d'une personne alignée sur `cv:` (Core Person Vocabulary) et `cccev:`. Permet de créer un `AlgoInput`|
+| `PublicRule[I]` | Classe de base d'un algorithme, générique sur son type d'entrée `I` (un `AlgoInput`). On implémente `compute()` ; `self.result()` construit l'`AlgoResult` |
+| `InputSource` | Contrat (Protocol) des modèles sources : tout objet qui sait produire un `AlgoInput` via `to_algo_input()` |
+| `FCPersonInput` | Modèle source prêt à l'emploi : personne alignée sur l'identité pivot de FranceConnect |
+| `compute_age` | Utilitaire : âge révolu à une date de référence donnée |
+
 
 ## Exemple d'utilisation
-### Code
+
+### 1. Déclarer le contrat d'entrée
+
+Chaque algorithme décrit ses entrées en sous-classant `AlgoInput`.
 
 ```python
 from datetime import date
-from regalgo import PersonInput
 
-# Décrire une personne avec des noms de variables provenant de : France Connect (FC) > API Particulier > Core Vocabulary Européens > Custom
-personne = PersonInput(
-    cv_nationality="FR",
-    fc_birthdate=date(1990, 6, 15),
-    mi_droits_civiques_intacts=True,
-    mi_inscription_liste_electorale=True,
-    cnaf_adresse_pays="FR",
+from pydantic import Field
+from regalgo import AlgoInput, AlgoResult, PublicRule
+
+
+class DroitVoteInput(AlgoInput):
+    age: int = Field(ge=0)
+    nationalite_francaise: bool
+    capacite_civique: bool
+    reference_date: date  # date utilisée pour calculer l'âge (traçabilité)
+```
+
+### 2. Implémenter la règle
+
+`PublicRule[DroitVoteInput]` indique le type d'entrée : l'IDE et mypy savent que `algo_input` est un `DroitVoteInput`.
+
+```python
+class DroitVote(PublicRule[DroitVoteInput]):
+    def compute(self, algo_input: DroitVoteInput) -> AlgoResult:
+        eligible = (
+            algo_input.age >= 18
+            and algo_input.nationalite_francaise
+            and algo_input.capacite_civique
+        )
+        return self.result(eligible, algo_input)
+```
+
+Le fichier `metadata.json` est lu à côté du fichier qui définit la règle (`DroitVote`).
+
+### 3. Exécuter
+
+```python
+resultat = DroitVote().compute(
+    DroitVoteInput(
+        age=35,
+        nationalite_francaise=True,
+        capacite_civique=True,
+        reference_date=date(2026, 1, 1),
+    )
 )
 
-# Convertir en AlgoInput (calcule l'âge automatiquement)
-algo_input = personne.to_algo_input()
-print(algo_input.data)
-# {
-#   'nationalite_francaise': True,
-#   'citoyennete_ue': True,
-#   'domicile_france': True,
-#   'age': 35,
-#   'capacite_civique': True,
-#   'inscrit_listes_electorales': True
-# }
+print(resultat.value)            # True
+print(resultat.algo_id)          # 'droit-vote'
+print(resultat.inputs_snapshot)
+# {'age': 35, 'nationalite_francaise': True, 'capacite_civique': True,
+#  'reference_date': '2026-01-01'}
 ```
 
+Les données sont validées à la construction de `DroitVoteInput` : un âge négatif ou un champ manquant lève une `ValidationError` avant même l'appel à `compute()`.
 
-### Projet : Algorithme droit de vote (POC)
+Le schéma des entrées, utilisé pour générer le simulateur et la documentation, est disponible directement :
 
-[regalgo-civique-droit-vote](https://github.com/qloridant/regalgo-civique-droit-vote) implémente l'algorithme d'éligibilité au droit de vote (Code électoral, Art. L.2 à L.7 et L.O. 227-1) en s'appuyant sur cette librairie.
-
-
-## CLI
-
-### `regalgo init` — initialiser un nouveau projet
-
-```bash
-regalgo init mon-algo
+```python
+DroitVoteInput.input_schema()  # JSON Schema
 ```
 
-La commande pose une série de questions pour configurer le fichier `metadata.json` :
+### 4. Brancher une source de données
 
+Les données réelles ne sont pas déjà au format de l'algorithme (date de naissance plutôt qu'âge, code pays plutôt qu'un booléen…). Un **modèle source** porte les données brutes et sait les projeter vers l'`AlgoInput` de l'algorithme, en calculant les champs dérivés.
+
+```python
+from typing import Any
+
+from pydantic import BaseModel
+from regalgo import compute_age
+
+
+class Demandeur(BaseModel):
+    birth_date: date
+    nationality: str          # ISO 3166-1 alpha-2
+    civil_rights_intact: bool
+
+    def to_algo_input(self, context: dict[str, Any] | None = None) -> DroitVoteInput:
+        reference_date = (context or {}).get("reference_date") or date.today()
+        return DroitVoteInput(
+            age=compute_age(self.birth_date, reference_date),
+            nationalite_francaise=self.nationality.upper() == "FR",
+            capacite_civique=self.civil_rights_intact,
+            reference_date=reference_date,
+        )
+
+
+demandeur = Demandeur(birth_date="2010-03-02", nationality="FR", civil_rights_intact=True)
+algo_input = demandeur.to_algo_input({"reference_date": date(2026, 1, 1)})
+
+DroitVote().compute(algo_input).value  # False (15 ans)
 ```
-Configuration du fichier metadata.json :
-  Titre de l'algorithme [mon-algo]: Éligibilité à la prestation X
-  Description de l'algorithme [Description de l'algorithme]: Calcule l'éligibilité...
-  Source réglementaire (URL ou référence légale) []: https://legifrance.gouv.fr/...
-  Description de la référence réglementaire [Référence réglementaire]: Décret n° 2024-XXX
-```
 
-Pour un usage non interactif (CI/CD), utilisez `--no-input` :
+Tout objet qui expose `to_algo_input()` respecte le contrat `InputSource`. La librairie fournit des sources prêtes à l'emploi, comme `FCPersonInput` (identité pivot FranceConnect), que vous pouvez compléter avec les données qu'elle ne couvre pas (nationalité, droits civiques…).
 
-```bash
-regalgo init mon-algo --no-input
-```
-
-Options :
-
-| Option | Description |
-|---|---|
-| `--output-dir`, `-o` | Répertoire parent où créer le projet (défaut : `.`) |
-| `--no-input` | Utilise les valeurs par défaut, sans poser de questions |
+> **Date de référence** : ne calculez pas l'âge avec `date.today()` à l'intérieur de l'algorithme. Passez une date de référence explicite (ici via `context`) et conservez-la dans l'entrée : le résultat reste reproductible et son snapshot est complet.
 
 
 ## Développement
