@@ -26,16 +26,18 @@ Les algorithmes publics (éligibilité, calcul de droits, conditions d'accès…
 
 ## Installation
 
+Le projet est pour le moment sur l'instance de test de Pypi. 
 Avec [uv](https://docs.astral.sh/uv/) (recommandé) :
 
 ```bash
+uv add --index https://test.pypi.org/simple/ regalgo
 uv add regalgo
 ```
 
 Avec pip :
 
 ```bash
-pip install regalgo
+pip install -i https://test.pypi.org/simple/ regalgo==0.0.3
 ```
 
 
