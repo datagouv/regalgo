@@ -149,16 +149,3 @@ DroitVote().compute(algo_input).value  # False (15 ans)
 ```
 
 Tout objet qui expose `to_algo_input()` respecte le contrat `InputSource`. La librairie fournit des sources prêtes à l'emploi, comme `FCPersonInput` (identité pivot FranceConnect), que vous pouvez compléter avec les données qu'elle ne couvre pas (nationalité, droits civiques…).
-
-> **Date de référence** : ne calculez pas l'âge avec `date.today()` à l'intérieur de l'algorithme. Passez une date de référence explicite (ici via `context`) et conservez-la dans l'entrée : le résultat reste reproductible et son snapshot est complet.
-
-
-## Développement
-
-```bash
-# Installer les dépendances
-uv sync
-
-# Lancer les tests
-uv run pytest
-```
